@@ -1,18 +1,18 @@
 # ai-lecture-project
 
-This project is written with Python `3.8` based on Anaconda (https://www.anaconda.com/distribution/).
-(The project can be upgraded to a higher Python version if required. )
+This project is uses Python 3.11 based on Anaconda (https://www.anaconda.com/distribution/).
 
 ## Getting started
 
 The file 'requirements.txt' lists the required packages.
 
 1. We recommend to use a virtual environment to ensure consistency, e.g.   
-`conda create -n ai-project python=3.8`
+`conda create -n ai-project-311 python=3.11 -y`
 
 2. Install the dependencies:  
 `conda install -c conda-forge --file requirements.txt` 
 
+3. Install Black Formatter and Flake8 linter. In VSCode, both are available as official Microsoft extension. Do always use black as formatter.
 
 ## Software Tests
 This project contains some software tests based on Python Unittest (https://docs.python.org/3/library/unittest.html). 

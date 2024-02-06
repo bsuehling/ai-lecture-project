@@ -1,4 +1,5 @@
 import unittest
+
 import numpy as np
 
 from graph import Graph
@@ -15,9 +16,12 @@ class TestGraph(unittest.TestCase):
         part2 = Part(2, 3)
         graph.add_undirected_edge(part1, part2)
 
-        self.assertEqual(len(graph.get_nodes()), 2, 'Graph should contain two nodes')
-        self.assertEqual(graph.get_nodes(), {Node(0, part1), Node(1, part2)},
-                         'Graph should contain source and sink node.')
+        self.assertEqual(len(graph.get_nodes()), 2, "Graph should contain two nodes")
+        self.assertEqual(
+            graph.get_nodes(),
+            {Node(0, part1), Node(1, part2)},
+            "Graph should contain source and sink node.",
+        )
 
     def test_add_undirected_edge_duplicate_undirected_edge_ignored(self):
         part1 = Part(1, 11)
@@ -33,7 +37,11 @@ class TestGraph(unittest.TestCase):
         graph_without_duplicated_edge.add_undirected_edge(part1, part3)
         graph_without_duplicated_edge.add_undirected_edge(part2, part3)
 
-        self.assertEqual(graph_without_duplicated_edge, graph, 'Graph should ignore duplicate reversed edges.')
+        self.assertEqual(
+            graph_without_duplicated_edge,
+            graph,
+            "Graph should ignore duplicate reversed edges.",
+        )
 
     def test_add_undirected_edge_duplicate_reversed_undirected_edge_ignored(self):
         part1 = Part(1, 11)
@@ -43,13 +51,17 @@ class TestGraph(unittest.TestCase):
         graph = Graph()  # 1 = 3 - 2
         graph.add_undirected_edge(part1, part3)
         graph.add_undirected_edge(part2, part3)
-        graph.add_undirected_edge(part3, part1)   # duplicate *reversed* undirected edge
+        graph.add_undirected_edge(part3, part1)  # duplicate *reversed* undirected edge
 
         graph_without_duplicated_edge = Graph()  # 1 - 3 - 2
         graph_without_duplicated_edge.add_undirected_edge(part1, part3)
         graph_without_duplicated_edge.add_undirected_edge(part2, part3)
 
-        self.assertEqual(graph_without_duplicated_edge, graph, 'Graph should ignore duplicate reversed edges.')
+        self.assertEqual(
+            graph_without_duplicated_edge,
+            graph,
+            "Graph should ignore duplicate reversed edges.",
+        )
 
     def test_add_undirected_edge_self_loops_of_nodes_ignored(self):
         part1 = Part(1, 11)
@@ -62,7 +74,9 @@ class TestGraph(unittest.TestCase):
         graph_without_self_loop = Graph()  # 1 - 2
         graph_without_self_loop.add_undirected_edge(part1, part2)
 
-        self.assertEqual(graph_without_self_loop, graph, 'Graph should ignore self-loops of nodes.')
+        self.assertEqual(
+            graph_without_self_loop, graph, "Graph should ignore self-loops of nodes."
+        )
 
     # -------------------- __eq__(other) --------------------
 
@@ -89,7 +103,11 @@ class TestGraph(unittest.TestCase):
         g2.add_undirected_edge(part6, part7)
 
         # Assert
-        self.assertEqual(g1, g2, 'Two different graph instances with equal nodes and edges should be equal.')
+        self.assertEqual(
+            g1,
+            g2,
+            "Two different graph instances with equal nodes and edges should be equal.",
+        )
 
     def test_equality_returns_false_for_different_nodes(self):
         # Arrange
@@ -111,9 +129,12 @@ class TestGraph(unittest.TestCase):
         g2.add_undirected_edge(part5, part6)
         g2.add_undirected_edge(part6, part7)
 
+        msg = (
+            "Two different graph instances with different number of nodes should "
+            + "not be equal."
+        )
         # Assert
-        self.assertNotEqual(g1, g2,
-                            'Two different graph instances with different number of nodes should not be equal.')
+        self.assertNotEqual(g1, g2, msg)
 
     def test_equality_returns_false_for_different_edges(self):
         # Arrange
@@ -134,10 +155,14 @@ class TestGraph(unittest.TestCase):
         g2.add_undirected_edge(part6, part8)
         g2.add_undirected_edge(part5, part6)
         g2.add_undirected_edge(part6, part7)
-        g2.add_undirected_edge(part7, part8)   # additional edge in graph2
+        g2.add_undirected_edge(part7, part8)  # additional edge in graph2
 
         # Assert equality but not identity
-        self.assertNotEqual(g1, g2, 'Two different graph instances with different edges should not be equal.')
+        self.assertNotEqual(
+            g1,
+            g2,
+            "Two different graph instances with different edges should not be equal.",
+        )
 
     # --------------------  --------------------
 
@@ -149,7 +174,7 @@ class TestGraph(unittest.TestCase):
         g.add_undirected_edge(part1, part2)
         g.add_undirected_edge(part2, part3_equivalent_to_part1)
 
-        self.assertEqual(3, len(g.get_nodes()), 'Graph should contain three nodes.')
+        self.assertEqual(3, len(g.get_nodes()), "Graph should contain three nodes.")
 
     # -------------------- is_cyclic() --------------------
 
@@ -164,7 +189,10 @@ class TestGraph(unittest.TestCase):
         graph = Graph()  # 1 - 2
         graph.add_undirected_edge(part1, part2)
 
-        self.assertFalse(graph.is_cyclic(), 'Graph with trivial cycle (bidirectional edge) should not be cyclic.')
+        self.assertFalse(
+            graph.is_cyclic(),
+            "Graph with trivial cycle (bidirectional edge) should not be cyclic.",
+        )
 
     def test_is_cyclic(self):
         part1 = Part(1, 11)
@@ -176,7 +204,7 @@ class TestGraph(unittest.TestCase):
         graph.add_undirected_edge(part2, part3)
         graph.add_undirected_edge(part3, part1)
 
-        self.assertTrue(graph.is_cyclic(), 'Cyclic graph should be cyclic.')
+        self.assertTrue(graph.is_cyclic(), "Cyclic graph should be cyclic.")
 
     def test_is_cyclic_returns_false_two_equivalent_parts(self):
         part1 = Part(1, 11)
@@ -190,7 +218,7 @@ class TestGraph(unittest.TestCase):
         graph.add_undirected_edge(part3, part4)
 
         # check if part1 and part4 are distinguished
-        self.assertFalse(graph.is_cyclic(), 'Graph should not be cyclic.')
+        self.assertFalse(graph.is_cyclic(), "Graph should not be cyclic.")
 
     # -------------------- is_connected() --------------------
 
@@ -205,7 +233,10 @@ class TestGraph(unittest.TestCase):
         graph = Graph()  # 1 - 2
         graph.add_undirected_edge(part1, part2)
 
-        self.assertTrue(graph.is_connected(), 'Graph composed of one bidirectional edge should be connected')
+        self.assertTrue(
+            graph.is_connected(),
+            "Graph composed of one bidirectional edge should be connected",
+        )
 
     def test_is_connected_returns_true_for_connected_graph(self):
         part1 = Part(1, 11)
@@ -218,7 +249,7 @@ class TestGraph(unittest.TestCase):
         graph.add_undirected_edge(part2, part3)
         graph.add_undirected_edge(part2, part4)
 
-        self.assertTrue(graph.is_connected(), 'Connected graph should be connected')
+        self.assertTrue(graph.is_connected(), "Connected graph should be connected")
 
     def test_is_connected_returns_false_for_separated_graph(self):
         part1 = Part(1, 11)
@@ -230,7 +261,10 @@ class TestGraph(unittest.TestCase):
         graph.add_undirected_edge(part1, part2)
         graph.add_undirected_edge(part3, part4)
 
-        self.assertFalse(graph.is_connected(), 'Two unconnected graphs with each 2 nodes should not be connected.')
+        self.assertFalse(
+            graph.is_connected(),
+            "Two unconnected graphs with each 2 nodes should not be connected.",
+        )
 
     # -------------------- get_adjacency_matrix(part_order) --------------------
 
@@ -242,12 +276,12 @@ class TestGraph(unittest.TestCase):
         part_e = Part(9, 10)
 
         """         Target Graph
-              B 
+              B
             /   \
           A       D - E
             \   /
               C
-        """
+        """  # noqa: W605
         graph = Graph()
         graph.add_undirected_edge(part_d, part_e)
         graph.add_undirected_edge(part_b, part_d)
@@ -257,11 +291,19 @@ class TestGraph(unittest.TestCase):
 
         part_order = (part_a, part_b, part_c, part_d, part_e)
 
-        expected_adj_matrix = np.array([[0, 1, 1, 0, 0],
-                                        [1, 0, 0, 1, 0],
-                                        [1, 0, 0, 1, 0],
-                                        [0, 1, 1, 0, 1],
-                                        [0, 0, 0, 1, 0]], dtype=int)
+        expected_adj_matrix = np.array(
+            [
+                [0, 1, 1, 0, 0],
+                [1, 0, 0, 1, 0],
+                [1, 0, 0, 1, 0],
+                [0, 1, 1, 0, 1],
+                [0, 0, 0, 1, 0],
+            ],
+            dtype=int,
+        )
 
         computed_adj_matrix = graph.get_adjacency_matrix(part_order)
-        self.assertTrue(np.all(expected_adj_matrix == computed_adj_matrix), 'Adjacency matrices should be equal.')
+        self.assertTrue(
+            np.all(expected_adj_matrix == computed_adj_matrix),
+            "Adjacency matrices should be equal.",
+        )

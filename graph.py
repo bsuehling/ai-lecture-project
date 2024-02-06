@@ -1,9 +1,6 @@
-import copy
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-from typing import Dict, List, Set, Tuple, Union
-
 
 from node import Node
 from part import Part
@@ -11,25 +8,34 @@ from part import Part
 
 class Graph:
     """
-    A class to represent graphs. A Graph is composed of nodes and edges between the nodes.
-    Specifically, these are *undirected*, *unweighted*, *non-cyclic* and *connected* graphs.
+    A class to represent graphs. A Graph is composed of nodes and edges between the
+    nodes. Specifically, these are *undirected*, *unweighted*, *non-cyclic* and
+    *connected* graphs.
     """
 
     def __init__(self, construction_id: int = None):
-        self.__construction_id: int = construction_id  # represents unix timestamp of creation date
-        self.__nodes: Set[Node] = set()
-        self.__edges: Dict[Node, List[Node]] = {}
+        self.__construction_id: int = (
+            construction_id  # represents unix timestamp of creation date
+        )
+        self.__nodes: set[Node] = set()
+        self.__edges: dict[Node, list[Node]] = {}
         self.__node_counter: int = 0  # internal node id counter
         self.__is_connected: bool = None  # determines if the graph is connected
-        self.__contains_cycle: bool = None   # determines if the graph contains non-trivial cycles
-        self.__is_bidirectional: bool = None  # determines if all edges are bidirectional
+        self.__contains_cycle: bool = (
+            None  # determines if the graph contains non-trivial cycles
+        )
+        self.__is_bidirectional: bool = (
+            None  # determines if all edges are bidirectional
+        )
 
     def __eq__(self, other) -> bool:
-        """ Specifies equality of two graph instances. """
+        """Specifies equality of two graph instances."""
         if other is None:
             return False
         if not isinstance(other, Graph):
-            raise TypeError(f'Can not compare different types ({type(self)} and {type(other)})')
+            raise TypeError(
+                f"Can not compare different types ({type(self)} and {type(other)})"
+            )
 
         # Equality is defined based on the *parts*, the node id is not relevant
         # compare number of nodes
@@ -49,13 +55,16 @@ class Graph:
             if len(self_node_neighbors) != len(other_node_neighbors):
                 return False
             for neighbor_idx in range(len(self_node_neighbors)):
-                if not self_node_neighbors[neighbor_idx].get_part() \
-                        .equivalent(other_node_neighbors[neighbor_idx].get_part()):
+                if (
+                    not self_node_neighbors[neighbor_idx]
+                    .get_part()
+                    .equivalent(other_node_neighbors[neighbor_idx].get_part())
+                ):
                     return False
         return True
 
     def __hash__(self) -> int:
-        """ Defines hash of a graph. """
+        """Defines hash of a graph."""
         hash_value = hash("Graph")
         for k, v in self.get_edges().items():
             pair = (k, tuple(v))
@@ -64,8 +73,8 @@ class Graph:
 
     def __get_node_for_part(self, part: Part) -> Node:
         """
-        Returns a node of the graph for the given part. If the part is already known in the graph, the
-        corresponding node is returned, else a new node is created.
+        Returns a node of the graph for the given part. If the part is already known in
+        the graph, the corresponding node is returned, else a new node is created.
         :param part: part
         :return: corresponding node for the given part
         """
@@ -79,14 +88,14 @@ class Graph:
         return node
 
     def __add_node(self, node):
-        """ Adds a node to the internal set of nodes. """
+        """Adds a node to the internal set of nodes."""
         self.__nodes.add(node)
 
     def add_undirected_edge(self, part1: Part, part2: Part):
         """
-        Adds an undirected edge between part1 and part2. Therefor, the parts are transformed to nodes.
-        This is equivalent to adding two directed edges, one from part1 to part2 and the second from
-        part2 to part1.
+        Adds an undirected edge between part1 and part2. Therefor, the parts are
+        transformed to nodes. This is equivalent to adding two directed edges, one from
+        part1 to part2 and the second from part2 to part1.
         :param part1: one of the parts for the undirected edge
         :param part2: second part for the undirected edge
         """
@@ -95,7 +104,8 @@ class Graph:
 
     def __add_edge(self, source: Part, sink: Part):
         """
-        Adds an directed edge from source to sink. Therefor, the parts are transformed to nodes.
+        Adds an directed edge from source to sink. Therefor, the parts are transformed
+        to nodes.
         :param source: start node of the directed edge
         :param sink: end node of the directed edge
         """
@@ -117,15 +127,16 @@ class Graph:
             self.__edges[source_node] = [sink_node]  # values of dict need to be arrays
         else:
             connected_nodes = self.get_edges().get(source_node)
-            # check if source and sink are already connected (to ignore duplicate connection)
+            # check if source and sink are already connected (to ignore duplicate
+            # connection)
             if sink_node not in connected_nodes:
                 self.__edges[source_node] = sorted(connected_nodes + [sink_node])
 
     def get_node(self, node_id: int):
-        """ Returns the corresponding node for a given node id. """
+        """Returns the corresponding node for a given node id."""
         matching_nodes = [node for node in self.get_nodes() if node.get_id() is node_id]
         if not matching_nodes:
-            raise AttributeError('Given node id not found.')
+            raise AttributeError("Given node id not found.")
         return matching_nodes[0]
 
     def to_nx(self):
@@ -136,7 +147,7 @@ class Graph:
         graph_nx = nx.Graph()
         for node in self.get_nodes():
             part = node.get_part()
-            info = f'\nPartID={part.get_part_id()}\nFamilyID={part.get_family_id()}'
+            info = f"\nPartID={part.get_part_id()}\nFamilyID={part.get_family_id()}"
 
             graph_nx.add_node(node, info=info)
 
@@ -148,27 +159,27 @@ class Graph:
         return graph_nx
 
     def draw(self):
-        """ Draws the graph with NetworkX and displays it. """
+        """Draws the graph with NetworkX and displays it."""
         graph_nx = self.to_nx()
-        labels = nx.get_node_attributes(graph_nx, 'info')
+        labels = nx.get_node_attributes(graph_nx, "info")
         nx.draw(graph_nx, labels=labels)
         plt.show()
 
-    def get_edges(self) -> Dict[Node, List[Node]]:
+    def get_edges(self) -> dict[Node, list[Node]]:
         """
         Returns a dictionary containing all directed edges.
         :return: dict of directed edges
         """
         return self.__edges
 
-    def get_nodes(self) -> Set[Node]:
+    def get_nodes(self) -> set[Node]:
         """
         Returns a set of all nodes.
         :return: set of all nodes
         """
         return self.__nodes
 
-    def get_parts(self) -> Set[Part]:
+    def get_parts(self) -> set[Part]:
         """
         Returns a set of all parts of the graph.
         :return: set of all parts
@@ -177,24 +188,27 @@ class Graph:
 
     def get_construction_id(self) -> int:
         """
-        Returns the unix timestamp for the creation date of the corresponding construction.
+        Returns the unix timestamp for the creation date of the corresponding
+        construction.
         :return: construction id (aka creation timestamp)
         """
         return self.__construction_id
 
-    def __breadth_search(self, start_node: Node) -> List[Node]:
+    def __breadth_search(self, start_node: Node) -> list[Node]:
         """
-        Performs a breadth search starting from the given node and returns all node it has seen
-        (including duplicates due to cycles within the graph).
+        Performs a breadth search starting from the given node and returns all node it
+        has seen (including duplicates due to cycles within the graph).
         :param start_node: Node of the graph to start the search
         :return: list of all seen nodes (may include duplicates)
         """
         parent_node: Node = None
-        queue: List[Tuple[Node, Node]] = [(start_node, parent_node)]
-        seen_nodes: List[Node] = [start_node]
+        queue: list[tuple[Node, Node]] = [(start_node, parent_node)]
+        seen_nodes: list[Node] = [start_node]
         while queue:
             curr_node, parent_node = queue.pop()
-            new_neighbors: List[Node] = [n for n in self.get_edges().get(curr_node) if n != parent_node]
+            new_neighbors: list[Node] = [
+                n for n in self.get_edges().get(curr_node) if n != parent_node
+            ]
             queue.extend([(n, curr_node) for n in new_neighbors if n not in seen_nodes])
             seen_nodes.extend(new_neighbors)
         return seen_nodes
@@ -205,35 +219,35 @@ class Graph:
         :return: boolean if the graph is connected
         """
         if self.get_nodes() == set():
-            raise BaseException('Operation not allowed on empty graphs.')
+            raise BaseException("Operation not allowed on empty graphs.")
 
         if self.__is_connected is None:
             # choose random start node and start breadth search
             start_node: Node = next(iter(self.get_nodes()))
-            seen_nodes: List[Node] = self.__breadth_search(start_node)
+            seen_nodes: list[Node] = self.__breadth_search(start_node)
             # if we saw all nodes during the breadth search, the graph is connected
             self.__is_connected = set(seen_nodes) == self.get_nodes()
         return self.__is_connected
 
     def is_cyclic(self) -> bool:
         """
-        Returns a boolean that indicates if the graph contains at least one non-trivial cycle.
-        A bidirectional edge between two nodes is a trivial cycle, so only cycles of at least three nodes make
-        a graph cyclic.
+        Returns a boolean that indicates if the graph contains at least one non-trivial
+        cycle. A bidirectional edge between two nodes is a trivial cycle, so only cycles
+        of at least three nodes make a graph cyclic.
         :return: boolean if the graph contains a cycle
         """
         if self.get_nodes() == set():
-            raise BaseException('Operation not allowed on empty graphs.')
+            raise BaseException("Operation not allowed on empty graphs.")
 
         if self.__contains_cycle is None:
             # choose random start node and start breadth search
             start_node: Node = next(iter(self.get_nodes()))
-            seen_nodes: List[Node] = self.__breadth_search(start_node)
+            seen_nodes: list[Node] = self.__breadth_search(start_node)
             # graph contains a cycle if we saw a node twice during breadth search
             self.__contains_cycle = len(seen_nodes) != len(set(seen_nodes))
         return self.__contains_cycle
 
-    def get_adjacency_matrix(self, part_order: Tuple[Part]) -> np.ndarray:
+    def get_adjacency_matrix(self, part_order: tuple[Part]) -> np.ndarray:
         """
         Returns
         :param part_order:
@@ -241,7 +255,7 @@ class Graph:
         """
         size = len(part_order)
         adj_matrix = np.zeros((size, size), dtype=int)
-        edges: Dict[Node, List[Node]] = self.get_edges()
+        edges: dict[Node, list[Node]] = self.get_edges()
 
         for idx, part in enumerate(part_order):
             node = self.__get_node_for_part(part)
@@ -253,4 +267,3 @@ class Graph:
                     adj_matrix[idx, idx2] = adj_matrix[idx2, idx] = 1
 
         return adj_matrix
-
