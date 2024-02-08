@@ -16,9 +16,9 @@ class TestGraph(unittest.TestCase):
         part2 = Part(2, 3)
         graph.add_undirected_edge(part1, part2)
 
-        self.assertEqual(len(graph.get_nodes()), 2, "Graph should contain two nodes")
+        self.assertEqual(len(graph.nodes), 2, "Graph should contain two nodes")
         self.assertEqual(
-            graph.get_nodes(),
+            graph.nodes,
             {Node(0, part1), Node(1, part2)},
             "Graph should contain source and sink node.",
         )
@@ -174,7 +174,7 @@ class TestGraph(unittest.TestCase):
         g.add_undirected_edge(part1, part2)
         g.add_undirected_edge(part2, part3_equivalent_to_part1)
 
-        self.assertEqual(3, len(g.get_nodes()), "Graph should contain three nodes.")
+        self.assertEqual(3, len(g.nodes), "Graph should contain three nodes.")
 
     # -------------------- is_cyclic() --------------------
 
@@ -275,13 +275,13 @@ class TestGraph(unittest.TestCase):
         part_d = Part(7, 8)
         part_e = Part(9, 10)
 
-        """         Target Graph
+        r"""         Target Graph
               B
             /   \
           A       D - E
             \   /
               C
-        """  # noqa: W605
+        """
         graph = Graph()
         graph.add_undirected_edge(part_d, part_e)
         graph.add_undirected_edge(part_b, part_d)

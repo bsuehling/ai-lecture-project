@@ -65,20 +65,18 @@ def edge_accuracy(predicted_graph: Graph, target_graph: Graph) -> int:
     :param target_graph:
     :return:
     """
-    assert len(predicted_graph.get_nodes()) == len(
-        target_graph.get_nodes()
+    assert len(predicted_graph.nodes) == len(
+        target_graph.nodes
     ), "Mismatch in number of nodes."
     assert (
-        predicted_graph.get_parts() == target_graph.get_parts()
+        predicted_graph.parts == target_graph.parts
     ), "Mismatch in expected and given parts."
 
     best_score = 0
 
     # Determine all permutations for the predicted graph and choose the best one in
     # evaluation
-    perms: list[tuple[Part]] = __generate_part_list_permutations(
-        predicted_graph.get_parts()
-    )
+    perms: list[tuple[Part]] = __generate_part_list_permutations(predicted_graph.parts)
 
     # Determine one part order for the target graph
     target_parts_order = perms[0]
@@ -144,9 +142,9 @@ if __name__ == "__main__":
 
     # Load the final model
 
-    model_file_path = ""  # ToDo
+    model_file_path = ""  # TODO
     prediction_model: MyPredictionModel = load_model(model_file_path)
 
     # For illustration, compute eval score on train data
-    instances = [(graph.get_parts(), graph) for graph in train_graphs[:100]]
+    instances = [(graph.parts, graph) for graph in train_graphs[:100]]
     eval_score = evaluate(prediction_model, instances)

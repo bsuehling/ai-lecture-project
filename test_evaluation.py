@@ -15,13 +15,13 @@ class TestEvaluation(unittest.TestCase):
         part_d1 = Part(7, 8)
         part_d2 = Part(7, 8)
 
-        """         Target Graph
+        r"""         Target Graph
               B
             /   \
          A1       D1  -  A2  -  D2
             \   /
               C
-        """  # noqa: W605
+        """
         target_graph = Graph()
         target_graph.add_undirected_edge(part_a1, part_b)
         target_graph.add_undirected_edge(part_a1, part_c)
@@ -30,13 +30,13 @@ class TestEvaluation(unittest.TestCase):
         target_graph.add_undirected_edge(part_d1, part_a2)
         target_graph.add_undirected_edge(part_a2, part_d2)
 
-        """         Predicted Graph: A1 and A2 as well as D1 and D2 are interchanged
+        r"""         Predicted Graph: A1 and A2 as well as D1 and D2 are interchanged
               B
             /   \
          A2       D1  -  A1  - D2
             \   /
               C
-        """  # noqa: W605
+        """
         predicted_graph = Graph()
         predicted_graph.add_undirected_edge(part_a2, part_b)
         predicted_graph.add_undirected_edge(part_a2, part_c)
@@ -46,7 +46,7 @@ class TestEvaluation(unittest.TestCase):
         predicted_graph.add_undirected_edge(part_a1, part_d2)
 
         expected_edge_accuracy = pow(
-            len(target_graph.get_nodes()), 2
+            len(target_graph.nodes), 2
         )  # all edges should be predicted correctly
         computed_edge_accuracy = edge_accuracy(predicted_graph, target_graph)
 
@@ -63,13 +63,13 @@ class TestEvaluation(unittest.TestCase):
         part_d = Part(7, 8)
         part_e = Part(9, 10)
 
-        """         Target Graph
+        r"""         Target Graph
               B
             /   \
           A       D - E
             \   /
               C
-        """  # noqa: W605
+        """
         target_graph = Graph()
         target_graph.add_undirected_edge(part_a, part_b)
         target_graph.add_undirected_edge(part_a, part_c)
@@ -77,13 +77,13 @@ class TestEvaluation(unittest.TestCase):
         target_graph.add_undirected_edge(part_c, part_d)
         target_graph.add_undirected_edge(part_d, part_e)
 
-        """         Predicted Graph: same as target graph
+        r"""         Predicted Graph: same as target graph
               B
             /   \
           A       D  -  E
             \   /
               C
-        """  # noqa: W605
+        """
         predicted_graph = Graph()
         predicted_graph.add_undirected_edge(part_a, part_b)
         predicted_graph.add_undirected_edge(part_a, part_c)
@@ -92,7 +92,7 @@ class TestEvaluation(unittest.TestCase):
         predicted_graph.add_undirected_edge(part_d, part_e)
 
         expected_edge_accuracy = pow(
-            len(target_graph.get_nodes()), 2
+            len(target_graph.nodes), 2
         )  # all edges should be predicted correctly
         computed_edge_accuracy = edge_accuracy(predicted_graph, target_graph)
 
@@ -109,13 +109,13 @@ class TestEvaluation(unittest.TestCase):
         part_d = Part(7, 8)
         part_e = Part(9, 10)
 
-        """         Target Graph
+        r"""         Target Graph
               B
             /   \
           A       D - E
             \   /
               C
-        """  # noqa: W605
+        """
         target_graph = Graph()
         target_graph.add_undirected_edge(part_a, part_b)
         target_graph.add_undirected_edge(part_a, part_c)
@@ -123,13 +123,13 @@ class TestEvaluation(unittest.TestCase):
         target_graph.add_undirected_edge(part_c, part_d)
         target_graph.add_undirected_edge(part_d, part_e)
 
-        """         Predicted Graph: (B, D) is missing and new edge (B, C)
+        r"""         Predicted Graph: (B, D) is missing and new edge (B, C)
               B
             /
           A   |   D - E
             \   /
               C
-        """  # noqa: W605
+        """
         predicted_graph = Graph()
         predicted_graph.add_undirected_edge(part_a, part_b)
         predicted_graph.add_undirected_edge(part_a, part_c)
@@ -138,7 +138,7 @@ class TestEvaluation(unittest.TestCase):
         predicted_graph.add_undirected_edge(part_d, part_e)
 
         expected_edge_accuracy = (
-            pow(len(target_graph.get_nodes()), 2) - 4
+            pow(len(target_graph.nodes), 2) - 4
         )  # two bidirectional edges are wrong
         computed_edge_accuracy = edge_accuracy(predicted_graph, target_graph)
 

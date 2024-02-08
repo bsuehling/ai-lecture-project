@@ -1,6 +1,6 @@
 # ai-lecture-project
 
-This project is uses Python 3.11 based on Anaconda (https://www.anaconda.com/distribution/).
+This project uses Python 3.11 based on Anaconda (https://www.anaconda.com/distribution/).
 
 ## Getting started
 
@@ -12,7 +12,7 @@ The file 'requirements.txt' lists the required packages.
 2. Install the dependencies:  
 `conda install -c conda-forge --file requirements.txt` 
 
-3. Install Black Formatter and Flake8 linter. In VSCode, both are available as official Microsoft extension. Do always use black as formatter.
+3. Install Black Formatter and Flake8 linter. In VSCode, both are available as official Microsoft extension. Do always format your code with black before commiting your code.
 
 ## Software Tests
 This project contains some software tests based on Python Unittest (https://docs.python.org/3/library/unittest.html). 
