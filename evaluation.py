@@ -135,9 +135,20 @@ def __generate_part_list_permutations(parts: set[Part]) -> list[tuple[Part]]:
 # --------------------------------------------------------------------------------------
 # Example code for evaluation
 
-if __name__ == "__main__":
+
+def main():
+    # ---------- important for pickle method to work
+    import sys
+
+    from ailp.models import graph, node, part
+
+    sys.modules["graph"] = graph
+    sys.modules["node"] = node
+    sys.modules["part"] = part
+    # ---------- important for pickle method to work
+
     # Load train data
-    with open("graphs.dat", "rb") as file:
+    with open("./data/graphs.dat", "rb") as file:
         train_graphs: list[Graph] = pickle.load(file)
 
     # Load the final model
@@ -148,3 +159,9 @@ if __name__ == "__main__":
     # For illustration, compute eval score on train data
     instances = [(graph.parts, graph) for graph in train_graphs[:100]]
     eval_score = evaluate(prediction_model, instances)
+
+    print(eval_score)
+
+
+if __name__ == "__main__":
+    main()
