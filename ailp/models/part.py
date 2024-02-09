@@ -30,10 +30,7 @@ class Part:
             raise TypeError(
                 f"Can not compare different types ({type(self)} and {type(other)})"
             )
-        return (
-            self.get_part_id() == other.get_part_id()
-            and self.get_family_id() == other.get_family_id()
-        )
+        return self.part_id == other.part_id and self.family_id == other.family_id
 
     def __repr__(self) -> str:
         """
@@ -41,13 +38,13 @@ class Part:
         :return: string representation
         """
         return (
-            f"{self.__class__.__name__}(PartID={self.get_part_id()}, FamilyID="
-            + f"{self.get_family_id()})"
+            f"{self.__class__.__name__}(PartID={self.part_id}, FamilyID="
+            + f"{self.family_id})"
         )
 
     def __hash__(self) -> int:
         """Defines hash of a component. Needed for software tests."""
-        return hash((self.get_part_id(), self.get_family_id()))
+        return hash((self.part_id, self.family_id))
 
     def __lt__(self, other) -> bool:
         """Defines an order on components."""
@@ -56,13 +53,15 @@ class Part:
                 f"Can not define order for different types ({type(self)} and "
                 + f"{type(other)})"
             )
-        return (self.get_part_id(), self.get_family_id()) < (
-            other.get_part_id(),
-            other.get_family_id(),
+        return (self.part_id, self.family_id) < (
+            other.part_id,
+            other.family_id,
         )
 
-    def get_part_id(self) -> int:
+    @property
+    def part_id(self) -> int:
         return self.__part_id
 
-    def get_family_id(self) -> int:
+    @property
+    def family_id(self) -> int:
         return self.__family_id

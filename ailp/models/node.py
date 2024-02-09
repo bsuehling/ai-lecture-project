@@ -1,4 +1,4 @@
-from part import Part
+from ailp.models.part import Part
 
 
 class Node:
@@ -19,20 +19,18 @@ class Node:
             raise TypeError(
                 f"Can not compare different types ({type(self)} and {type(other)})"
             )
-        return self.get_id() == other.get_id() and self.get_part() == other.get_part()
+        return self.id == other.id and self.part == other.part
 
     def __repr__(self) -> str:
         """
         Returns a string representation of the current Node object.
         :return: string representation
         """
-        return (
-            f"{self.__class__.__name__}(NodeID={self.get_id()}, Part={self.get_part()})"
-        )
+        return f"{self.__class__.__name__}(NodeID={self.id}, Part={self.part})"
 
     def __hash__(self) -> int:
         """Defines hash of a node. Needed for software tests."""
-        return hash((self.get_id(), self.get_part()))
+        return hash((self.id, self.part))
 
     def __lt__(self, other) -> bool:
         """Defines an order on nodes."""
@@ -40,10 +38,12 @@ class Node:
             raise TypeError(
                 f"Can not compare different types ({type(self)} and {type(other)})"
             )
-        return self.get_part() < other.get_part()
+        return self.part < other.part
 
-    def get_id(self) -> int:
+    @property
+    def id(self) -> int:
         return self.__id
 
-    def get_part(self) -> Part:
+    @property
+    def part(self) -> Part:
         return self.__part
