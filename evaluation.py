@@ -4,8 +4,8 @@ from itertools import permutations
 
 import numpy as np
 
-from graph import Graph
-from part import Part
+from ailp.models.graph import Graph
+from ailp.models.part import Part
 
 
 class MyPredictionModel(ABC):

@@ -2,9 +2,7 @@ import unittest
 
 import numpy as np
 
-from graph import Graph
-from node import Node
-from part import Part
+from ailp.models import Graph, Node, Part
 
 
 class TestGraph(unittest.TestCase):

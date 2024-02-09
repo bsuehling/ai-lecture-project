@@ -1,8 +1,7 @@
 import unittest
 
+from ailp.models import Graph, Part
 from evaluation import edge_accuracy
-from graph import Graph
-from part import Part
 
 
 class TestEvaluation(unittest.TestCase):
