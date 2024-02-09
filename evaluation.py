@@ -4,8 +4,8 @@ from itertools import permutations
 
 import numpy as np
 
-from ailp.models.graph import Graph
-from ailp.models.part import Part
+from ailp.graph.graph import Graph
+from ailp.graph.part import Part
 
 
 class MyPredictionModel(ABC):
@@ -140,7 +140,7 @@ def main():
     # ---------- important for pickle method to work
     import sys
 
-    from ailp.models import graph, node, part
+    from ailp.graph import graph, node, part
 
     sys.modules["graph"] = graph
     sys.modules["node"] = node

@@ -1,6 +1,6 @@
 import unittest
 
-from ailp.models import Graph, Part
+from ailp.graph import Graph, Part
 from evaluation import edge_accuracy
 
 

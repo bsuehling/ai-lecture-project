@@ -1,4 +1,4 @@
-from ailp.models.part import Part
+from ailp.graph.part import Part
 
 
 class Node:

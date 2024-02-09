@@ -3,8 +3,8 @@ import networkx as nx
 import numpy as np
 import numpy.typing as npt
 
-from ailp.models.node import Node
-from ailp.models.part import Part
+from ailp.graph.node import Node
+from ailp.graph.part import Part
 
 
 class Graph:

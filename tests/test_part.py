@@ -1,6 +1,6 @@
 import unittest
 
-from ailp.models import Part
+from ailp.graph import Part
 
 
 class TestPart(unittest.TestCase):
