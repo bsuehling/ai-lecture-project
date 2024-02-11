@@ -7,10 +7,10 @@ This project uses Python 3.11 based on Anaconda (https://www.anaconda.com/distri
 The file 'requirements.txt' lists the required packages.
 
 1. We recommend to use a virtual environment to ensure consistency, e.g.   
-`conda create -n ai-project-311 python=3.11 -y`
+`conda env create -f environment.yml`
 
-2. Install the dependencies:  
-`conda install -c conda-forge --file requirements.txt` 
+2. To later update your dependencies:  
+`conda env update -f environment.yml` 
 
 3. Install Black Formatter and Flake8 linter. In VSCode, both are available as official Microsoft extension. Do always format your code with black before commiting your code.
 

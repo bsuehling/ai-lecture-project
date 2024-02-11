@@ -5,12 +5,14 @@ import sys
 from itertools import permutations
 
 import numpy as np
+from tqdm import tqdm
 
 from ailp.approaches import PredictionModel
 from ailp.constants import MODEL_DICT
 from ailp.graph import Graph, Part, graph, node, part
-from ailp.utils import split_dataset
+from ailp.utils import create_unique_dir, get_latest_path, get_model_path, split_dataset
 
+# Needed to load graphs from ./data/graphs.dat
 sys.modules["graph"] = graph
 sys.modules["node"] = node
 sys.modules["part"] = part
@@ -26,7 +28,7 @@ def evaluate(model: PredictionModel, data_set: list[tuple[set[Part], Graph]]) ->
     sum_correct_edges = 0
     edges_counter = 0
 
-    for input_parts, target_graph in data_set:
+    for input_parts, target_graph in tqdm((data_set)):
         predicted_graph = model.predict_graph(input_parts)
 
         edges_counter += len(input_parts) * len(input_parts)
@@ -122,6 +124,7 @@ def main():
     seed = os.environ.get("RANDOM_SEED", 42)
     stage = os.environ.get("STAGE", "train")
     approach = os.environ.get("APPROACH", "no_ml")
+    epoch = os.environ.get("EPOCH")
 
     random.seed(seed)
 
@@ -130,11 +133,17 @@ def main():
     prediction_model: PredictionModel = MODEL_DICT.get(approach)
 
     if stage == "train":
-        prediction_model.train(train_graphs, eval_graphs)
+        model_path = create_unique_dir(approach)
+        prediction_model(train_path=model_path).train(train_graphs, eval_graphs)
 
     elif stage == "test":
+        unique_dir = os.environ.get("UNIQUE_DIR", "latest")
+        if unique_dir == "latest":
+            load_path = get_latest_path()
+        else:
+            load_path = get_model_path(approach, unique_dir, epoch=epoch)
         instances = [(graph.parts, graph) for graph in test_graphs]
-        eval_score = evaluate(prediction_model, instances)
+        eval_score = evaluate(prediction_model(test_path=load_path), instances)
 
         print(eval_score)
 

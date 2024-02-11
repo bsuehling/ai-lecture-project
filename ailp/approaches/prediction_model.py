@@ -1,12 +1,20 @@
+import os
 from abc import ABC, abstractmethod
 
 from ailp.graph import Graph, Part
+from ailp.utils import load_model
 
 
 class PredictionModel(ABC):
     """
     This class is a blueprint for your prediction model(s) serving as base class.
     """
+
+    def __init__(
+        self, train_path: str | os.PathLike = None, test_path: str | os.PathLike = None
+    ) -> None:
+        self._train_path = train_path
+        self._model = None if test_path is None else load_model(test_path)
 
     @abstractmethod
     def predict_graph(self, parts: set[Part]) -> Graph:
