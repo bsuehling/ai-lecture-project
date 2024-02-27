@@ -2,6 +2,7 @@ name: ai-project-311
 channels:
   - conda-forge
   - pytorch
+  - pyg
 dependencies:
   - python=3.11
   - matplotlib>=3.8.2
@@ -11,3 +12,4 @@ dependencies:
   - urllib3>=2.2.0
   - pytorch>=2.1.2
   - tqdm>=4.66.2
+  - pyg>=2.5.0

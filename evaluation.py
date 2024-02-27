@@ -123,7 +123,7 @@ def main():
 
     seed = os.environ.get("RANDOM_SEED", 42)
     stage = os.environ.get("STAGE", "train")
-    approach = os.environ.get("APPROACH", "no_ml")
+    approach = os.environ.get("APPROACH", "edge_gnn")
     epoch = os.environ.get("EPOCH")
 
     random.seed(seed)

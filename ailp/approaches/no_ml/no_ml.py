@@ -12,7 +12,7 @@ class NoMLModel(PredictionModel):
         # Find the parts which to connect first
         max_conns = None, None, -1
         for part in parts_:
-            for other in parts_ - set([part]):
+            for other in parts_ - {part}:
                 count = model.get(part.part_id, {}).get(other.part_id, None)
                 if count and count > max_conns[2]:
                     max_conns = part, other, count
