@@ -11,3 +11,7 @@ dependencies:
   - urllib3>=2.2.0
   - pytorch>=2.1.2
   - tqdm>=4.66.2
+  - dgl
+  - pandas
+  - stellargraph::stellargraph
+  - conda-forge::chardet
