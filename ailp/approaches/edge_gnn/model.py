@@ -1,5 +1,3 @@
-from itertools import product
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -32,11 +30,14 @@ class EdgePredictor(nn.Module):
         self._fc_unconnected = nn.Sequential(nn.Linear(8, 16))
         self._fc = nn.Sequential(nn.Linear(32, 64), nn.ReLU(), nn.Linear(64, 1))
 
-    def forward(self, x: Tensor, mask: Tensor, edges: Tensor) -> Tensor:
+    def forward(
+        self, x: Tensor, mask: Tensor, candidates: Tensor, edges: Tensor
+    ) -> Tensor:
         x_unconnected = self._fc_unconnected(x[~mask])
         x_graph = F.relu(self._conv1(x[mask], edges))
         x_graph = F.relu(self._conv2(x_graph, edges))
-        ec = torch.tensor(list(product(mask.tolist(), (~mask).tolist())))
-        edge_candidates = torch.cat((x_graph[ec[:, 0]], x_unconnected[ec[:, 1]]))
-        out = F.softmax(torch.squeeze(self._fc(edge_candidates)))
+        edge_candidates = torch.cat(
+            (x_graph[candidates[:, 0]], x_unconnected[candidates[:, 1]])
+        )
+        out = torch.squeeze(self._fc(edge_candidates))
         return out
