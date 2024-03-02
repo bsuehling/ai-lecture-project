@@ -7,9 +7,10 @@ from ailp.graph import Edge, Graph, Node
 
 def oracle_loss(
     graph: Graph,
-    target: list[Edge],
-    prediction: Tensor,  # predicted prob of each candidate (n,)
-    candidates: Tensor,  # tensor of possible preds (n,2)
+    nodes: list[Node],
+    prediction: Tensor,
+    candidates: Tensor,
+    idx_candidates: Tensor,
     pools: list[set[Edge]],
     visited: list[set[Edge]],
     start_node: Node | None,
@@ -17,9 +18,9 @@ def oracle_loss(
     pred_idx = prediction.argmax()
     pred = candidates[pred_idx]
     valid_edges = _get_valid_edges(graph, pools, visited, start_node)
-    valid = [(n1.part.part_id, n2.part.part_id) for n1, n2 in valid_edges]
+    valid = [(n1.part_id, n2.part_id) for n1, n2 in valid_edges]
 
-    t = torch.tensor([1 if c.tolist() in valid else 0 for c in candidates])
+    t = torch.tensor([1 if c.tolist() in valid else 0 for c in candidates], dtype=float)
 
     if tuple(pred.tolist()) in valid:
         t = F.one_hot(torch.tensor([pred_idx]), num_classes=len(prediction))
@@ -27,9 +28,10 @@ def oracle_loss(
         pred_idx = (prediction * t).argmax()
         pred = candidates[pred_idx]
 
-    loss = F.cross_entropy(prediction, t)
+    loss = F.cross_entropy(prediction, t.float().flatten())
 
-    new_edge: Edge = target[pred_idx.item()]
+    pred_edge = idx_candidates[pred_idx].tolist()
+    new_edge = nodes[pred_edge[0]], nodes[pred_edge[1]]
     new_pools, new_visited = _update_pools(graph, pools, visited, tuple(pred.tolist()))
 
     return loss, new_edge, new_pools, new_visited
@@ -57,10 +59,10 @@ def _update_pools(
 ) -> tuple[list[set[Edge]], list[set[Edge]]]:
     new: set[tuple[tuple[Edge, ...], tuple[Edge, ...]]] = set()
     if not pools:
-        return [_find_edges(graph, edge)], [{edge, edge[::-1]}]
+        return [_find_edges_from_part_ids(graph, edge)], [{edge, edge[::-1]}]
     for pool, vis in zip(pools, visited):
         for e in pool - vis:
-            if e[0].part.part_id == edge[0] and e[1].part.part_id == edge[1]:
+            if e[0].part_id == edge[0] and e[1].part_id == edge[1]:
                 p = pool | _find_edges(graph, e)
                 v = vis | {e, e[::-1]}
                 new.add((tuple(p), tuple(v)))
@@ -85,16 +87,9 @@ def _find_edges_from_node(graph: Graph, node: Node) -> set[Edge]:
     return edges
 
 
-# def _get_valid_edges(graph: Graph, target: list[Edge], options: set[tuple[Edge, ...]]):
-#     if not options:
-#         return set(target)
-
-#     valid: set[Edge] = set()
-#     for option in options:
-#         pool: set[Edge] = set()
-#         visited: set[Edge] = set()
-#         for edge in option:
-#             visited |= {edge, edge[::-1]}
-#             pool |= _find_edges(graph, edge)
-#         valid |= pool - visited
-#     return valid
+def _find_edges_from_part_ids(graph: Graph, edge: tuple[int, int]):
+    edges: set[Edge] = set()
+    for node1, v in graph.edges.items():
+        if node1.part_id in edge:
+            edges |= {(node1, node2) for node2 in v}
+    return edges

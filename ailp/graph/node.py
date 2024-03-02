@@ -47,3 +47,11 @@ class Node:
     @property
     def part(self) -> Part:
         return self.__part
+
+    @property
+    def part_id(self) -> int:
+        return int(self.__part.part_id)
+
+    @property
+    def family_id(self) -> int:
+        return int(self.__part.family_id)

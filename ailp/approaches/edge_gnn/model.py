@@ -9,10 +9,10 @@ class NodeEncoder(nn.Module):
     def __init__(self, n_part_ids: int, n_family_ids: int, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._encode_part_id = nn.Sequential(
-            nn.Linear(n_part_ids, 100), nn.ReLU(), nn.Linear(100, 8), nn.ReLU()
+            nn.Linear(n_part_ids, 100), nn.ReLU(), nn.Linear(100, 2), nn.ReLU()
         )
         self._encode_family_id = nn.Sequential(
-            nn.Linear(n_family_ids, 10), nn.ReLU(), nn.Linear(50, 8), nn.ReLU()
+            nn.Linear(n_family_ids, 50), nn.ReLU(), nn.Linear(50, 2), nn.ReLU()
         )
 
     def forward(self, x: tuple[Tensor, Tensor]) -> Tensor:
@@ -25,19 +25,24 @@ class NodeEncoder(nn.Module):
 class EdgePredictor(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._conv1 = gnn.GraphConv(2, 8)
+        self._conv1 = gnn.GraphConv(4, 8)
         self._conv2 = gnn.GraphConv(8, 16)
-        self._fc_unconnected = nn.Sequential(nn.Linear(8, 16))
+
+        self._fc_unconnected = nn.Sequential(nn.Linear(4, 16))
         self._fc = nn.Sequential(nn.Linear(32, 64), nn.ReLU(), nn.Linear(64, 1))
 
     def forward(
-        self, x: Tensor, mask: Tensor, candidates: Tensor, edges: Tensor
+        self, x_u: Tensor, x_g: Tensor, candidates: Tensor, edges: Tensor
     ) -> Tensor:
-        x_unconnected = self._fc_unconnected(x[~mask])
-        x_graph = F.relu(self._conv1(x[mask], edges))
-        x_graph = F.relu(self._conv2(x_graph, edges))
+        x_unconnected = self._fc_unconnected(x_u)
+        if len(edges) == 0:
+            x_graph = self._fc_unconnected(x_g)
+        else:
+            x_graph = F.relu(self._conv1(x_g, edges))
+            x_graph = F.relu(self._conv2(x_graph, edges))
+        x_stacked = torch.cat((x_graph, x_unconnected))
         edge_candidates = torch.cat(
-            (x_graph[candidates[:, 0]], x_unconnected[candidates[:, 1]])
+            (x_stacked[candidates[:, 0]], x_stacked[candidates[:, 1]]), dim=1
         )
         out = torch.squeeze(self._fc(edge_candidates))
         return out

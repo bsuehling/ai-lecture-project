@@ -22,6 +22,7 @@ class EdgeGnnModel(PredictionModel):
         n_epochs: int = 50,
     ):
         super().__init__(train_path=train_path, test_path=test_path)
+        torch.autograd.set_detect_anomaly(True)
 
         with open(os.path.join("data", "mappings", "part_map.json"), "r") as f:
             self._part_map: dict[str, int] = json.load(f)
@@ -64,12 +65,10 @@ class EdgeGnnModel(PredictionModel):
         graph_nodes: list[list[Node]],
         graphs: list[Graph],
     ):
-        total_loss = torch.tensor(0)
+        total_loss = 0
         self._encoder.train()
         self._predictor.train()
-        part_ids = torch.tensor(
-            [[n.part.part_id for n in nodes] for nodes in graph_nodes]
-        )
+        part_ids = [[n.part_id for n in nodes] for nodes in graph_nodes]
         for features, nodes, graph, p_ids in zip(
             graph_features, graph_nodes, graphs, part_ids
         ):
@@ -77,8 +76,8 @@ class EdgeGnnModel(PredictionModel):
             loss = self._predict(p_ids, features, nodes, graph)
             loss.backward()
             self._optimizer.step()
-            self._scheduler.step()
-            total_loss += loss
+            self._scheduler.step(loss)
+            total_loss += loss.item()
         return float(total_loss / len(graphs))
 
     def _eval(
@@ -87,16 +86,15 @@ class EdgeGnnModel(PredictionModel):
         graph_nodes: list[list[Node]],
         graphs: list[Graph],
     ):
-        total_loss = torch.tensor(0)
+        total_loss = 0
         self._encoder.eval()
         self._predictor.eval()
-        part_ids = torch.tensor(
-            [[n.part.part_id for n in nodes] for nodes in graph_nodes]
-        )
+        part_ids = [[n.part_id for n in nodes] for nodes in graph_nodes]
         for features, nodes, graph, p_ids in zip(
             graph_features, graph_nodes, graphs, part_ids
         ):
-            total_loss += self._predict(p_ids, features, nodes, graph)
+            loss = self._predict(p_ids, features, nodes, graph)
+            total_loss += loss.item()
         return float(total_loss / len(graphs))
 
     def _predict(
@@ -106,30 +104,37 @@ class EdgeGnnModel(PredictionModel):
         nodes: list[Node],
         graph: Graph,
     ) -> Tensor:
-        loss = torch.tensor(0)
+        loss = 0
         encoded: Tensor = self._encoder(features)
         mask: Tensor = torch.zeros(len(nodes), dtype=bool)
         mask[0] = True
         edges: list[tuple[int, int]] = []
-        target = [(n1, n2) for n1, v in graph.edges.items() for n2 in v]
         pools: list[set[Edge]] = []
         visited: list[set[Edge]] = []
         g_nodes: list[Node] = [nodes[0]]
         while not mask.all():
-            idx_candidates = torch.tensor(
-                list(product(mask.tolist(), (~mask).tolist()))
-            )
-            candidates = torch.stack([part_ids[mask], part_ids[~mask]]).T
-            pred = self._predictor(encoded, mask, idx_candidates, edges)
+            ones = mask.nonzero().flatten().tolist()
+            zeros = (~mask).nonzero().flatten().tolist()
+            idx_cands = torch.tensor(list(product(ones, zeros)))
+            p_ids = torch.tensor(part_ids)
+            candidates = torch.tensor(list(product(p_ids[mask], p_ids[~mask])))
+            x_u = encoded[~mask.clone()]
+            x_g = encoded[mask.clone()]
+            t_edges = torch.tensor(edges, dtype=int)
+            if len(edges) > 0:
+                t_edges = t_edges.T
+            pred = self._predictor(x_u, x_g, idx_cands, t_edges)
             start_node = g_nodes[0] if not mask.any() else None
             l, new_edge, pools, visited = oracle_loss(
-                graph, target, pred, candidates, pools, visited, start_node
+                graph, nodes, pred, candidates, idx_cands, pools, visited, start_node
             )
             loss += l
             new_node_idx = next(i for i, n in enumerate(nodes) if n == new_edge[1])
             mask[new_node_idx] = True
             g_nodes.append(new_edge[1])
-            edges += [g_nodes.index(new_edge[0]), len(g_nodes) - 1]
+            e0 = g_nodes.index(new_edge[0])
+            e1 = len(g_nodes) - 1
+            edges += [(e0, e1), (e1, e0)]
         return loss
 
     def _prepare_node_features(
@@ -142,10 +147,10 @@ class EdgeGnnModel(PredictionModel):
 
             part_ids_encoded = F.one_hot(
                 torch.tensor(part_ids), num_classes=len(self._part_map)
-            )
+            ).float()
             family_ids_encoded = F.one_hot(
                 torch.tensor(family_ids), num_classes=len(self._family_map)
-            )
+            ).float()
             return part_ids_encoded, family_ids_encoded
 
         return [one_hot([n.part for n in sorted(nodes)]) for nodes in graph_nodes]
