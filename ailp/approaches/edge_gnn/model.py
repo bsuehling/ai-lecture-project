@@ -9,10 +9,10 @@ class NodeEncoder(nn.Module):
     def __init__(self, n_part_ids: int, n_family_ids: int, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._encode_part_id = nn.Sequential(
-            nn.Linear(n_part_ids, 100), nn.ReLU(), nn.Linear(100, 2), nn.ReLU()
+            nn.Linear(n_part_ids, 100), nn.SELU(), nn.Linear(100, 2), nn.SELU()
         )
         self._encode_family_id = nn.Sequential(
-            nn.Linear(n_family_ids, 50), nn.ReLU(), nn.Linear(50, 2), nn.ReLU()
+            nn.Linear(n_family_ids, 50), nn.SELU(), nn.Linear(50, 2), nn.SELU()
         )
 
     def forward(self, x: tuple[Tensor, Tensor]) -> Tensor:
@@ -28,8 +28,14 @@ class EdgePredictor(nn.Module):
         self._conv1 = gnn.GraphConv(4, 8)
         self._conv2 = gnn.GraphConv(8, 16)
 
-        self._fc_unconnected = nn.Sequential(nn.Linear(4, 16))
-        self._fc = nn.Sequential(nn.Linear(32, 64), nn.ReLU(), nn.Linear(64, 1))
+        self._fc_unconnected = nn.Sequential(nn.Dropout(0.2), nn.Linear(4, 16))
+        self._fc = nn.Sequential(
+            nn.Dropout(0.2),
+            nn.Linear(32, 64),
+            nn.SELU(),
+            nn.Dropout(0.2),
+            nn.Linear(64, 1),
+        )
 
     def forward(
         self, x_u: Tensor, x_g: Tensor, candidates: Tensor, edges: Tensor
@@ -38,8 +44,8 @@ class EdgePredictor(nn.Module):
         if len(edges) == 0:
             x_graph = self._fc_unconnected(x_g)
         else:
-            x_graph = F.relu(self._conv1(x_g, edges))
-            x_graph = F.relu(self._conv2(x_graph, edges))
+            x_graph = F.selu(self._conv1(x_g, edges))
+            x_graph = F.selu(self._conv2(x_graph, edges))
         x_stacked = torch.cat((x_graph, x_unconnected))
         edge_candidates = torch.cat(
             (x_stacked[candidates[:, 0]], x_stacked[candidates[:, 1]]), dim=1

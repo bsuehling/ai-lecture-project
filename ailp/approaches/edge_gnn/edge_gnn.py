@@ -22,7 +22,7 @@ class EdgeGnnModel(PredictionModel):
         self,
         train_path: str | os.PathLike = None,
         test_path: str | os.PathLike = None,
-        n_epochs: int = 1,
+        n_epochs: int = 50,
     ):
         super().__init__(train_path=train_path, test_path=test_path)
         torch.autograd.set_detect_anomaly(True)
@@ -86,10 +86,10 @@ class EdgeGnnModel(PredictionModel):
         train_data = EdgeGnnDataset(train_feat, train_nodes, train_graphs, train_ids)
         eval_data = EdgeGnnDataset(eval_feat, eval_nodes, eval_graphs, eval_ids)
         train_loader = DataLoader(
-            train_data, batch_size=10, shuffle=True, collate_fn=lambda x: x
+            train_data, batch_size=25, shuffle=True, collate_fn=lambda x: x
         )
         eval_loader = DataLoader(
-            eval_data, batch_size=10, shuffle=False, collate_fn=lambda x: x
+            eval_data, batch_size=1, shuffle=False, collate_fn=lambda x: x
         )
 
         for epoch in range(1, 1 + self._n_epochs):
