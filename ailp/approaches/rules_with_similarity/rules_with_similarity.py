@@ -88,7 +88,6 @@ class RulesWithSimilarityModel(PredictionModel):
             edges = generate_possible_edges()
             rated = [ (e, rate_edge(e)) for e in edges]
             best_rating = max([ re[1] for re in rated ])
-            # print(best_rating)
             chosen_edge = next(filter(lambda re: re[1] == best_rating, rated), None)[0]
             connect(chosen_edge[0], chosen_edge[1])
 
@@ -99,8 +98,6 @@ class RulesWithSimilarityModel(PredictionModel):
     ########################################################################################
 
     def train(self, train_graphs: list[Graph], eval_graphs: list[Graph]):
-        self.log(1, "Training like it means something")
-
         part_ids, family_ids = self.read_ids()
         def extract_part_id(part: Part): return part.part_id
         def extract_family_id(part: Part): return part.family_id
@@ -202,7 +199,6 @@ class RulesWithSimilarityModel(PredictionModel):
         return edge_likelihood
 
     # Creates a Word2Vec model
-    # See: https://radimrehurek.com/gensim/models/word2vec.html
     def create_word_2_vec_model(self, train_graphs: list[Graph],
                                 extract=lambda part: part.part_id,
                                 walk_length=10, # maximum length of a random walk

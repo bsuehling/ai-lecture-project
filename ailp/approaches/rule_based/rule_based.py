@@ -6,9 +6,6 @@ from ailp.graph import Graph, Part
 from ailp.graph.node import Node
 from ailp.utils import save_model
 
-# Scores:
-#  92.3 (Always select part with highest open connectors as src)
-#  97.8 (Rank and compare all possible edges from parts in tree and spare parts)
 class RuleBasedModel(PredictionModel):
 
     def log(self, level: int, string: str):
@@ -17,8 +14,6 @@ class RuleBasedModel(PredictionModel):
     
 
     def predict_graph(self, parts: set[Part]) -> Graph:
-        self.log(1, f"\n########### Parts {[p.part_id for p in parts]}")
-
         graph = Graph()
         # Parts which are currently (not) in the tree
         spare_parts, used_parts = parts.copy(), []
@@ -135,53 +130,3 @@ class RuleBasedModel(PredictionModel):
             self.log(1, f"{part_id} = {(min_degree, max_degree, avg_degree, fav_parts)}")
 
         return node_info_dict
-    
-    # def calc_edge_info(self, train_graphs: list[Graph]):
-    #     # Calculate the set of all edges
-    #     edges = set([])
-    #     for graph in train_graphs:
-    #         edges = edges.union(self.edges_for_graph(graph))
-    #     self.log(1, f"There are {len(edges)} different edges")
-
-
-    #     edge_info_dict: dict[(str, str), (int, int)] = {}
-    #     for edge in edges:
-    #         possible, found = 0, 0
-    #         for graph in train_graphs:
-    #             # Check whether it's possible to build this edge
-    #             part_ids = [n.part.part_id for n in graph.nodes]
-    #             src, tgt = edge
-    #             if src in part_ids and tgt in part_ids:
-    #                 possible += 1
-    #             else: continue
-
-    #             # Check whether this edge is actually found
-    #             local_edges = self.edges_for_graph(graph)
-    #             if edge in local_edges: found += 1
-
-    #         score = found / possible
-    #         edge_info_dict[edge] = (possible, found, score)
-
-    #     return edge_info_dict
-
-
-    # def edges_for_graph(self, graph: Graph):
-    #     edges = set([])
-    #     for src, neighbors in graph.edges.items():
-    #         for tgt in neighbors:
-    #             edges.add(frozenset([src.part.part_id, tgt.part.part_id]))
-    #     return edges
-
-    # def find_types(self, graphs: list[Graph]):
-    #     types = []
-    #     for graph in graphs:
-    #         for node in graph.nodes:
-    #             type = int(node.part.part_id)
-    #             if not type in types:
-    #                 types.append(type)
-    #     types.sort()
-    #     return types
-
-    # def parts_to_vec(self, parts: set[Part]):
-    
-    

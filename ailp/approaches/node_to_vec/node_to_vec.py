@@ -188,18 +188,15 @@ class NodeToVecModel(PredictionModel):
             X.append(embedding)
             Y.append(examples[index])
 
-        # Define input and output shapes
         input_shape = (len(X[0]),)
         output_shape = len(all_ids)
 
-        # Define your model
         model = tf.keras.Sequential([
             tf.keras.layers.Input(shape=input_shape),
             tf.keras.layers.Dense(128, activation='relu'),
             tf.keras.layers.Dense(output_shape, activation='softmax')
         ])
 
-        # Compile the model
         model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
         model.fit(np.array(X), np.array(Y), epochs=10, batch_size=32, validation_split=0.2)
