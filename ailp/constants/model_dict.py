@@ -1,6 +1,16 @@
-from ailp.approaches import EdgeGnnModel, NoMLModel, PredictionModel
+from ailp.approaches import (
+    EdgeGnnModel,
+    NodeToVecModel,
+    NoMLModel,
+    PredictionModel,
+    RuleBasedModel,
+    RulesWithSimilarityModel,
+)
 
 MODEL_DICT: dict[str, PredictionModel] = {
-    "no_ml": NoMLModel,
     "edge_gnn": EdgeGnnModel,
+    "node_to_vec": NodeToVecModel,
+    "no_ml": NoMLModel,
+    "rule_based": RuleBasedModel,
+    "rules_with_similarity": RulesWithSimilarityModel,
 }
