@@ -20,7 +20,12 @@ train-rules-with-similarity:
 test-rules-with-similarity:
 	APPROACH=rules_with_similarity STAGE=test python ./evaluation.py
 
-train-no_ml:
+train-no-ml:
 	APPROACH=no_ml STAGE=train python ./evaluation.py
-test-no_ml:
+test-no-ml:
 	APPROACH=no_ml STAGE=test python ./evaluation.py
+
+train-edge-gnn:
+	APPROACH=edge_gnn STAGE=train python ./evaluation.py
+test-dege-gnn:
+	APPROACH=edge_gnn STAGE=test python ./evaluation.py

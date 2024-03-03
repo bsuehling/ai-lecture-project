@@ -113,17 +113,13 @@ def __generate_part_list_permutations(parts: set[Part]) -> list[tuple[Part]]:
     return full_perms
 
 
-# --------------------------------------------------------------------------------------
-# Example code for evaluation
-
-
 def main():
     with open("./data/graphs.dat", "rb") as file:
         graphs: list[Graph] = pickle.load(file)
 
     seed = os.environ.get("RANDOM_SEED", 42)
     stage = os.environ.get("STAGE", "train")
-    approach = os.environ.get("APPROACH", "no_ml")
+    approach = os.environ.get("APPROACH", "edge_gnn")
     epoch = os.environ.get("EPOCH")
 
     random.seed(seed)
