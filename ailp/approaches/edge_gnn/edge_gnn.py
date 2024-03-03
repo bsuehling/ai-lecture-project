@@ -22,7 +22,7 @@ class EdgeGnnModel(PredictionModel):
         self,
         train_path: str | os.PathLike = None,
         test_path: str | os.PathLike = None,
-        n_epochs: int = 50,
+        n_epochs: int = 1,
     ):
         super().__init__(train_path=train_path, test_path=test_path)
         torch.autograd.set_detect_anomaly(True)
@@ -41,10 +41,39 @@ class EdgeGnnModel(PredictionModel):
         self._optimizer = torch.optim.Adam(params, lr=0.01)
         self._scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self._optimizer)
 
+        if self._model is not None:
+            self._load_state()
+
         self._n_epochs = n_epochs
 
     def predict_graph(self, parts: set[Part]) -> Graph:
-        return Graph()
+        features = self._one_hot(sorted(parts))
+        encoded: Tensor = self._encoder(features)
+        mask: Tensor = torch.zeros(len(parts), dtype=bool)
+        mask[0] = True
+        edges: list[tuple[int, int]] = []
+        sparts = sorted(parts)
+        g_parts: list[Part] = [sparts[0]]
+        graph = Graph()
+        while not mask.all():
+            ones = mask.nonzero().flatten().tolist()
+            zeros = (~mask).nonzero().flatten().tolist()
+            idx_cands = torch.tensor(list(product(ones, zeros)))
+            x_u = encoded[~mask.clone()]
+            x_g = encoded[mask.clone()]
+            t_edges = torch.tensor(edges, dtype=int)
+            t_edges = t_edges.T if len(edges) > 0 else t_edges
+            pred: Tensor = self._predictor(x_u, x_g, idx_cands, t_edges)
+            pred_edge = idx_cands[pred.argmax()].tolist()
+            new_edge: tuple[Part, Part] = sparts[pred_edge[0]], sparts[pred_edge[1]]
+            graph.add_undirected_edge(*new_edge)
+            new_idx = next(i for i, p in enumerate(sparts) if p is new_edge[1])
+            mask[new_idx] = True
+            g_parts.append(new_edge[1])
+            e0 = g_parts.index(new_edge[0])
+            e1 = len(g_parts) - 1
+            edges += [(e0, e1), (e1, e0)]
+        return graph
 
     def train(self, train_graphs: list[Graph], eval_graphs: list[Graph]):
         train_nodes = [sorted(graph.nodes) for graph in train_graphs]
@@ -78,12 +107,15 @@ class EdgeGnnModel(PredictionModel):
         total_loss = 0.0
         self._encoder.train()
         self._predictor.train()
-        for batch in data_loader:
+        for i, batch in enumerate(data_loader):
             self._optimizer.zero_grad()
             loss = self._predict_multi(batch)
             loss.backward()
             self._optimizer.step()
             total_loss += loss.item()
+            track_path = os.path.join(self._train_path, "losses.txt")
+            with open(track_path, "a") as f:
+                f.write(f"Batch: {i:03d}, Loss: {loss:.4f}\n")
         self._scheduler.step(loss)
         return total_loss
 
@@ -109,7 +141,7 @@ class EdgeGnnModel(PredictionModel):
         features: tuple[Tensor, Tensor],
         nodes: list[Node],
         graph: Graph,
-        part_ids: Tensor,
+        part_ids: list[int],
     ) -> Tensor:
         loss = 0
         encoded: Tensor = self._encoder(features)
@@ -142,25 +174,24 @@ class EdgeGnnModel(PredictionModel):
             e0 = g_nodes.index(new_edge[0])
             e1 = len(g_nodes) - 1
             edges += [(e0, e1), (e1, e0)]
-        return loss
+        return loss / (len(nodes) - 1)
 
     def _prepare_node_features(
         self, graph_nodes: list[list[Node]]
     ) -> list[tuple[Tensor, Tensor]]:
+        return [self._one_hot(sorted([n.part for n in nodes])) for nodes in graph_nodes]
 
-        def one_hot(parts: list[Part]):
-            part_ids = [self._part_map[str(part.part_id)] for part in parts]
-            family_ids = [self._family_map[str(part.family_id)] for part in parts]
+    def _one_hot(self, parts: list[Part]):
+        part_ids = [self._part_map[str(part.part_id)] for part in parts]
+        family_ids = [self._family_map[str(part.family_id)] for part in parts]
 
-            part_ids_encoded = F.one_hot(
-                torch.tensor(part_ids), num_classes=len(self._part_map)
-            ).float()
-            family_ids_encoded = F.one_hot(
-                torch.tensor(family_ids), num_classes=len(self._family_map)
-            ).float()
-            return part_ids_encoded, family_ids_encoded
-
-        return [one_hot([n.part for n in sorted(nodes)]) for nodes in graph_nodes]
+        part_ids_encoded = F.one_hot(
+            torch.tensor(part_ids), num_classes=len(self._part_map)
+        ).float()
+        family_ids_encoded = F.one_hot(
+            torch.tensor(family_ids), num_classes=len(self._family_map)
+        ).float()
+        return part_ids_encoded, family_ids_encoded
 
     def _save_state(self, epoch: int):
         state = {

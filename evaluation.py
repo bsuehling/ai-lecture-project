@@ -113,10 +113,6 @@ def __generate_part_list_permutations(parts: set[Part]) -> list[tuple[Part]]:
     return full_perms
 
 
-# --------------------------------------------------------------------------------------
-# Example code for evaluation
-
-
 def main():
     with open("./data/graphs.dat", "rb") as file:
         graphs: list[Graph] = pickle.load(file)
