@@ -1,43 +1,24 @@
+import os
 import pickle
-from abc import ABC, abstractmethod
+import random
+import sys
 from itertools import permutations
 
 import numpy as np
+from tqdm import tqdm
 
-from graph import Graph
-from part import Part
+from ailp.approaches import PredictionModel
+from ailp.constants import MODEL_DICT
+from ailp.graph import Graph, Part, graph, node, part
+from ailp.utils import create_unique_dir, get_latest_path, get_model_path, split_dataset
 
-
-class MyPredictionModel(ABC):
-    """
-    This class is a blueprint for your prediction model(s) serving as base class.
-    """
-
-    @abstractmethod
-    def predict_graph(self, parts: set[Part]) -> Graph:
-        """
-        Returns a graph containing all given parts. This method is called within the
-        method `evaluate`.
-        :param parts: set of parts to form up a construction (i.e. graph)
-        :return: graph
-        """
-        # TODO: implement this method
-        ...
+# Needed to load graphs from ./data/graphs.dat
+sys.modules["graph"] = graph
+sys.modules["node"] = node
+sys.modules["part"] = part
 
 
-def load_model(file_path: str) -> MyPredictionModel:
-    """
-    This method loads the prediction model from a file (needed for evaluating your model
-    on the test set).
-    :param file_path: path to file
-    :return: the loaded prediction model
-    """
-    ...
-
-
-def evaluate(
-    model: MyPredictionModel, data_set: list[tuple[set[Part], Graph]]
-) -> float:
+def evaluate(model: PredictionModel, data_set: list[tuple[set[Part], Graph]]) -> float:
     """
     Evaluates a given prediction model on a given data set.
     :param model: prediction model
@@ -47,7 +28,7 @@ def evaluate(
     sum_correct_edges = 0
     edges_counter = 0
 
-    for input_parts, target_graph in data_set:
+    for input_parts, target_graph in tqdm((data_set)):
         predicted_graph = model.predict_graph(input_parts)
 
         edges_counter += len(input_parts) * len(input_parts)
@@ -65,20 +46,18 @@ def edge_accuracy(predicted_graph: Graph, target_graph: Graph) -> int:
     :param target_graph:
     :return:
     """
-    assert len(predicted_graph.get_nodes()) == len(
-        target_graph.get_nodes()
+    assert len(predicted_graph.nodes) == len(
+        target_graph.nodes
     ), "Mismatch in number of nodes."
     assert (
-        predicted_graph.get_parts() == target_graph.get_parts()
+        predicted_graph.parts == target_graph.parts
     ), "Mismatch in expected and given parts."
 
     best_score = 0
 
     # Determine all permutations for the predicted graph and choose the best one in
     # evaluation
-    perms: list[tuple[Part]] = __generate_part_list_permutations(
-        predicted_graph.get_parts()
-    )
+    perms: list[tuple[Part]] = __generate_part_list_permutations(predicted_graph.parts)
 
     # Determine one part order for the target graph
     target_parts_order = perms[0]
@@ -102,13 +81,13 @@ def __generate_part_list_permutations(parts: set[Part]) -> list[tuple[Part]]:
     """
     # split parts into sets of same part type
     equal_parts_sets: dict[Part, set[Part]] = {}
-    for part in parts:
+    for p in parts:
         for seen_part in equal_parts_sets.keys():
-            if part.equivalent(seen_part):
-                equal_parts_sets[seen_part].add(part)
+            if p.equivalent(seen_part):
+                equal_parts_sets[seen_part].add(p)
                 break
         else:
-            equal_parts_sets[part] = {part}
+            equal_parts_sets[p] = {p}
 
     multi_occurrence_parts: list[set[Part]] = [
         pset for pset in equal_parts_sets.values() if len(pset) > 1
@@ -134,19 +113,50 @@ def __generate_part_list_permutations(parts: set[Part]) -> list[tuple[Part]]:
     return full_perms
 
 
-# --------------------------------------------------------------------------------------
-# Example code for evaluation
+def main():
+    with open("./data/graphs.dat", "rb") as file:
+        graphs: list[Graph] = pickle.load(file)
+
+    # Uncomment the following lines to run trainig / tests other than the final
+    # performance test
+    # seed = os.environ.get("RANDOM_SEED", 42)
+    # stage = os.environ.get("STAGE", "train")
+    # approach = os.environ.get("APPROACH", "edge_gnn")
+    epoch = os.environ.get("EPOCH")
+
+    seed = 42
+    stage = "final"
+    approach = "rule_based"
+
+    random.seed(seed)
+
+    train_graphs, eval_graphs, test_graphs = split_dataset(graphs)
+
+    prediction_model: PredictionModel = MODEL_DICT.get(approach)
+
+    if stage == "train":
+        model_path = create_unique_dir(approach)
+        prediction_model(train_path=model_path).train(train_graphs, eval_graphs)
+
+    elif stage == "test":
+        unique_dir = os.environ.get("UNIQUE_DIR", "latest")
+        if unique_dir == "latest":
+            load_path = get_latest_path()
+        else:
+            load_path = get_model_path(approach, unique_dir, epoch=epoch)
+        instances = [(graph.parts, graph) for graph in test_graphs]
+        eval_score = evaluate(prediction_model(test_path=load_path), instances)
+
+        print(eval_score)
+
+    elif stage == "final":
+        load_path = os.path.join(".", "data", "final-models", "rule_based.pickle")
+        model = prediction_model(test_path=load_path)
+
+        instances = [(graph.parts, graph) for graph in test_graphs]
+        eval_score = evaluate(model, instances)
+        print(eval_score)
+
 
 if __name__ == "__main__":
-    # Load train data
-    with open("graphs.dat", "rb") as file:
-        train_graphs: list[Graph] = pickle.load(file)
-
-    # Load the final model
-
-    model_file_path = ""  # ToDo
-    prediction_model: MyPredictionModel = load_model(model_file_path)
-
-    # For illustration, compute eval score on train data
-    instances = [(graph.get_parts(), graph) for graph in train_graphs[:100]]
-    eval_score = evaluate(prediction_model, instances)
+    main()

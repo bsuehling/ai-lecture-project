@@ -1,0 +1,19 @@
+name: ai-project-311
+channels:
+  - conda-forge
+  - pytorch
+  - pyg
+  - stellargraph
+dependencies:
+  - python=3.11
+  - matplotlib>=3.8.2
+  - networkx>=3.2.1
+  - numpy>=1.26.4
+  - scikit-learn>=1.4.0
+  - urllib3>=2.2.0
+  - pytorch>=2.1.2
+  - tqdm>=4.66.2
+  - pyg>=2.5.0
+  - stellargraph>=1.2.1
+  - chardet>=5.1.0
+  - tensorflow>=2.15.0
