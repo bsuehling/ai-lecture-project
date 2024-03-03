@@ -6,7 +6,9 @@ from itertools import product
 import torch
 import torch.nn.functional as F
 from torch import Tensor
+from torch.utils.data import DataLoader
 
+from ailp.approaches.edge_gnn.dataset import EdgeGnnDataset
 from ailp.approaches.edge_gnn.model import EdgePredictor, NodeEncoder
 from ailp.approaches.edge_gnn.oracle import oracle_loss
 from ailp.approaches.prediction_model import PredictionModel
@@ -46,63 +48,66 @@ class EdgeGnnModel(PredictionModel):
     def train(self, train_graphs: list[Graph], eval_graphs: list[Graph]):
         train_nodes = [sorted(graph.nodes) for graph in train_graphs]
         eval_nodes = [sorted(graph.nodes) for graph in eval_graphs]
-        train_features = self._prepare_node_features(train_nodes)
-        eval_features = self._prepare_node_features(eval_nodes)
+        train_feat = self._prepare_node_features(train_nodes)
+        eval_feat = self._prepare_node_features(eval_nodes)
+        train_ids = [[n.part_id for n in nodes] for nodes in train_nodes]
+        eval_ids = [[n.part_id for n in nodes] for nodes in eval_nodes]
+
+        train_data = EdgeGnnDataset(train_feat, train_nodes, train_graphs, train_ids)
+        eval_data = EdgeGnnDataset(eval_feat, eval_nodes, eval_graphs, eval_ids)
+        train_loader = DataLoader(
+            train_data, batch_size=10, shuffle=True, collate_fn=lambda x: x
+        )
+        eval_loader = DataLoader(
+            eval_data, batch_size=10, shuffle=False, collate_fn=lambda x: x
+        )
 
         for epoch in range(1, 1 + self._n_epochs):
             start_time = time.perf_counter()
-            train_loss = self._train(train_features, train_nodes, train_graphs)
-            eval_loss = self._eval(eval_features, eval_nodes, eval_graphs)
+            train_loss = self._train(train_loader) / len(train_data)
+            eval_loss = self._eval(eval_loader) / len(eval_data)
             end_time = time.perf_counter() - start_time
             print(
                 f"Epoch: {epoch:02d}, Train Loss: {train_loss:.4f}, "
                 f"Eval Loss: {eval_loss:.4f}, Time: {end_time:.4f}"
             )
 
-    def _train(
-        self,
-        graph_features: list[tuple[Tensor, Tensor]],
-        graph_nodes: list[list[Node]],
-        graphs: list[Graph],
-    ):
-        total_loss = 0
+    def _train(self, data_loader: DataLoader) -> float:
+        total_loss = 0.0
         self._encoder.train()
         self._predictor.train()
-        part_ids = [[n.part_id for n in nodes] for nodes in graph_nodes]
-        for features, nodes, graph, p_ids in zip(
-            graph_features, graph_nodes, graphs, part_ids
-        ):
+        for batch in data_loader:
             self._optimizer.zero_grad()
-            loss = self._predict(p_ids, features, nodes, graph)
+            loss = self._predict_multi(batch)
             loss.backward()
             self._optimizer.step()
-            self._scheduler.step(loss)
             total_loss += loss.item()
-        return float(total_loss / len(graphs))
+        self._scheduler.step(loss)
+        return total_loss
 
-    def _eval(
-        self,
-        graph_features: list[tuple[Tensor, Tensor]],
-        graph_nodes: list[list[Node]],
-        graphs: list[Graph],
-    ):
-        total_loss = 0
+    def _eval(self, data_loader: DataLoader):
+        total_loss = 0.0
         self._encoder.eval()
         self._predictor.eval()
-        part_ids = [[n.part_id for n in nodes] for nodes in graph_nodes]
-        for features, nodes, graph, p_ids in zip(
-            graph_features, graph_nodes, graphs, part_ids
-        ):
-            loss = self._predict(p_ids, features, nodes, graph)
+        for batch in data_loader:
+            loss = self._predict_multi(batch)
             total_loss += loss.item()
-        return float(total_loss / len(graphs))
+        return total_loss
+
+    def _predict_multi(
+        self, batch: list[tuple[tuple[Tensor, Tensor], list[Node], Graph, list[int]]]
+    ) -> Tensor:
+        loss = 0
+        for b in batch:
+            loss += self._predict(*b)
+        return loss
 
     def _predict(
         self,
-        part_ids: Tensor,
         features: tuple[Tensor, Tensor],
         nodes: list[Node],
         graph: Graph,
+        part_ids: Tensor,
     ) -> Tensor:
         loss = 0
         encoded: Tensor = self._encoder(features)
