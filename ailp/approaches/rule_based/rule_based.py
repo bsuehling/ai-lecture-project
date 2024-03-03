@@ -48,9 +48,8 @@ class RuleBasedModel(PredictionModel):
             connection_counts[src_part] += 1
             connection_counts[tgt_part] += 1
             # Logging
-            self.log(1, f"Connect {src_part.part_id} #{connection_counts[src_part]} -> {tgt_part.part_id} (#{connection_counts[tgt_part]})")
-            self.log(1, f"  Used {[p.part_id for p in used_parts]}, Spare {[p.part_id for p in spare_parts]})")
-
+            # self.log(1, f"Connect {src_part.part_id} #{connection_counts[src_part]} -> {tgt_part.part_id} (#{connection_counts[tgt_part]})")
+            # self.log(1, f"  Used {[p.part_id for p in used_parts]}, Spare {[p.part_id for p in spare_parts]})")
 
         # Add one initial part to the graph
         max_degree_num = max([degree(p) for p in spare_parts])
@@ -96,6 +95,8 @@ class RuleBasedModel(PredictionModel):
         return graph
 
     def train(self, train_graphs: list[Graph], eval_graphs: list[Graph]):
+        # No need for evaluation
+        train_graphs = train_graphs + eval_graphs
         node_info_dict = self.calc_node_info(train_graphs)
         save_model(node_info_dict, self._train_path)
 
