@@ -51,4 +51,8 @@ class NoMLModel(PredictionModel):
                     if neighbor_part_id not in connections[part_id]:
                         connections[part_id][neighbor_part_id] = 0
                     connections[part_id][neighbor_part_id] += 1
+
+        for src, tgt in connections.items():
+            print(f"{src} -> {tgt}")
+
         save_model(connections, self._train_path)

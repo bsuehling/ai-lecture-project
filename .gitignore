@@ -162,3 +162,5 @@ cython_debug/
 
 # Project spefic ignores:
 data/models/
+
+.vscode/
