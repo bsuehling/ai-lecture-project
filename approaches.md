@@ -1,5 +1,5 @@
 We implemented a total of six different approaches to solve the provided problem.
-The code can be found under `ails/approaches`. 
+The code can be found under `ailp/approaches`. 
 A detailed explanation for each approach will be provided in the following sections.
 
 Although we considered a bunch of increasingly complex models,
@@ -11,7 +11,7 @@ The NoML approach is a pretty straight-forward approach which considers only how
 It was the first approach we implemented and serves as a baseline to find out if other models bring any improvement over a 1h hack and also helped us get familiar with the code base.
 
 ### Implementation
-First, we iterate over all training graphs and, for each occuring part_id, count how often it is connected to each other occuring part_id. This one sentence already describes the complete training.
+First, we iterate over all training graphs and, for each occurring part_id, count how often it is connected to each other occurring part_id. This one sentence already describes the complete training.
 
 To predict a graph from a set of parts, we do the following:
 - To predict the first edge, we iterate over all possible new edges and take the one with the most occurrences in the train data as first edge of the graph. If none of the candidates occurred in the train data, we use a random edge.
@@ -118,30 +118,31 @@ A first part is then chosen as the start node of the predicted graph. Afterwards
 
 We predict a new edge. Therefore, we first split all parts into already predicted parts (PPs) and still unpredicted parts (UPs). For all PPs, we use a graph convolutional neural net (GNN) to give each node to gain information about their neighbor nodes. As convolution layer, we use the simple message passing layer from the [Weisfeiler and Leman Go Neural: Higher-order Graph Neural Networks](https://arxiv.org/abs/1810.02244) paper, which is implemented in `pytorch_geometric`. For all UPs, we use a single fully connected layer with dropout. Remember that we already encoded the features with 2 FCs, making the total number of FCs for UPs 3. We then build the cross product of PPs and UPs to get all new edge candidates. For each edge candidate, the newly computed features of the corresponding PP and UP are concatenated. Finally, the class probabilities are computed using two more FC layers with dropout. As activation functions, we use SELUs as they promise to produce self-normalizing neural networks.
 
-We compute the so called oracle loss. This loss first checks which of the candidates are actually valid. It therefore keeps track of all part combinations which may have been predicted by the model. This is necessary as there are sometimes multiple identical parts within one graph. Thus, they also have the same exact features. Consequently, we cannot be sure which of these parts the model actually wanted to predict. Now, in each iteration step, we check for each combination which valid edges may be predicted. This gives us the valid edges mentioned above which we now use as target. To finally compute the loss, we check if the predicted edge is actually valid. If not, we leave the target unchanged. If yes, we only leave the precited edge as a 1 in the target, all other valid edges become 0. This rewards the network for predicting a valid edge and enables it to actually optimize the loss towards 0. If, for a valid prediction we had multiple 1s in the target, there will always be a loss greater zero as the model's predicted class probabilities are normalized with softmax, making it impossible to have several classes with a probability close to 1. This change of the target after checking the prediction gave the loss function the name oracle loss - it acts as it had already known the correct prediction in advance.
+We compute the so called oracle loss. This loss first checks which of the candidates are actually valid. It therefore keeps track of all part combinations which may have been predicted by the model. This is necessary as there are sometimes multiple identical parts within one graph. Thus, they also have the same exact features. Consequently, we cannot be sure which of these parts the model actually wanted to predict. Now, in each iteration step, we check for each combination which valid edges may be predicted. This gives us the valid edges mentioned above which we now use as target. To finally compute the loss, we check if the predicted edge is actually valid. If not, we leave the target unchanged. If yes, we only leave the predicted edge as a 1 in the target, all other valid edges become 0. This rewards the network for predicting a valid edge and enables it to actually optimize the loss towards 0. If, for a valid prediction we had multiple 1s in the target, there will always be a loss greater zero as the model's predicted class probabilities are normalized with softmax, making it impossible to have several classes with a probability close to 1. This change of the target after checking the prediction gave the loss function the name oracle loss - it acts as it had already known the correct prediction in advance.
 
 ### Results
 
 Unfortunately, this approach only achieved a test edge accuracy of little over 72% for the model with the best training performance. It is also computationally a lot more expensive than simpler rule-based approaches and it took us way more time to implement than, e.g., the NoML approach.
 
-At first, the model was only able to decrease the orcale loss for a few batches during the first epoch and afterwards had the same oracle loss for the remaing epochs - for training as well as for evaluation samples. We then changed some hyperparameters and got a much smoother performance during training:
+At first, the model was only able to decrease the orcale loss for a few batches during the first epoch and afterwards had the same oracle loss for the remaining epochs - for training as well as for evaluation samples. We then changed some hyperparameters and got a much smoother performance during training:
 - Replace ReLU activations with SELU activations
 - Increase batch size from 10 to 25
 - Use dropout with `p=0.2` for the fully connected layers
+This model was actually able to bring the training loss to almost zero. 
+Therefore, with more fine-tuning it might be able to also perform well on new data.
 
-Fun-fact: we also secretly ran the test for the model which only learned during the first few batches and it achieved a test edge accuracy of about 80%. As we are no cheaters, though, we sticked to the model with the better traing and evaluation performane.
-
-
-## Challenges
-Two questions we found difficult to answer for ML approaches are the following.
-
-How shall we encode the input features? The only information each node holds are 2 ids, i.e., features which don't have any inherent information. The only real way to express this features therefore was to handle them as class labels and build huge 1-hot-encoded tensors - there are ove 1000 different part ids.
-
-What shall we optimize against? There are mainly two ways we made out: either predict the whole graph at once or iteratively predict edges until a complete graph has beem predicted. The first brings huge complexity to the model's options. For example, it has to learn that graphs are non-cyclic and fully-connected. Thus, we opted for the latter approach which brings the problem of finding a sensible loss function. This difficulty originates especially from the possibility for a graph to have duplicate parts and the resulting difficulty of computing graph equality.
+Fun-fact: we also secretly ran the test for the model which only learned during the first few batches and it achieved a test edge accuracy of about 80%. 
+As we are no cheaters though, we sticked to the model with the better training and evaluation performance.
 
 ## Conclusion
-We think that Machine Learning is rather over-engineering for this specific problem statement, where our only features are parts with two different ids - i.e., features that cannot be interpreted (apart from parts belonging to the same part family when their family id is the same). 
 
-Instead, the simple, rule-based approaches performed much better and are also much easier to understand and computationally far less expensive.
+The construction graphs are structurally simple and don’t contain any complex features for individual nodes apart from their type.
+Therefore a simple algorithmic solution was able to beat all other approaches.
 
-Therefore, always consider carefully whether to throw ML on each problem you face or if you're fine using classical algorithms.
+Of course we didn’t stop there and attempted to improve the test performance with more involved models like neural networks and node embeddings.
+
+But in the end, although we were unable to outperform the algorithmic solution, we consider this result a success.
+It shows that the simplest solution for a problem can often be the best one.
+
+This is a good insight for the field of AI, as it can be tempting to use large and complex models on simple tasks.
+It is always a good idea to start out simple and go from there.
