@@ -27,5 +27,5 @@ test-no-ml:
 
 train-edge-gnn:
 	APPROACH=edge_gnn STAGE=train python ./evaluation.py
-test-dege-gnn:
+test-edge-gnn:
 	APPROACH=edge_gnn STAGE=test python ./evaluation.py

@@ -112,7 +112,7 @@ class RuleBasedModel(PredictionModel):
             edges = generate_possible_edges()
             rated = [(e, rate_edge(e)) for e in edges]
             best_rating = max([re[1] for re in rated])
-            print(best_rating)
+            # print(best_rating)
             chosen_edge = next(filter(lambda re: re[1] == best_rating, rated), None)[0]
             connect(chosen_edge[0], chosen_edge[1])
 
@@ -161,8 +161,8 @@ class RuleBasedModel(PredictionModel):
 
             # Store the information
             node_info_dict[part_id] = (min_degree, max_degree, avg_degree, fav_parts)
-            self.log(
-                1, f"{part_id} = {(min_degree, max_degree, avg_degree, fav_parts)}"
-            )
+            # self.log(
+            #     1, f"{part_id} = {(min_degree, max_degree, avg_degree, fav_parts)}"
+            # )
 
         return node_info_dict
