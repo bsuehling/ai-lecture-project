@@ -13,6 +13,7 @@ from ailp.approaches.edge_gnn.model import EdgePredictor, NodeEncoder
 from ailp.approaches.edge_gnn.oracle import oracle_loss
 from ailp.approaches.prediction_model import PredictionModel
 from ailp.graph import Edge, Graph, Node, Part
+from ailp.utils.path import TorchWrapper, save_model
 
 
 class EdgeGnnModel(PredictionModel):
@@ -66,6 +67,7 @@ class EdgeGnnModel(PredictionModel):
             start_time = time.perf_counter()
             train_loss = self._train(train_loader) / len(train_data)
             eval_loss = self._eval(eval_loader) / len(eval_data)
+            self._save_state(epoch)
             end_time = time.perf_counter() - start_time
             print(
                 f"Epoch: {epoch:02d}, Train Loss: {train_loss:.4f}, "
@@ -159,3 +161,18 @@ class EdgeGnnModel(PredictionModel):
             return part_ids_encoded, family_ids_encoded
 
         return [one_hot([n.part for n in sorted(nodes)]) for nodes in graph_nodes]
+
+    def _save_state(self, epoch: int):
+        state = {
+            "encoder": self._encoder.state_dict(),
+            "predictor": self._predictor.state_dict(),
+            "optimizer": self._optimizer.state_dict(),
+            "scheduler": self._scheduler.state_dict(),
+        }
+        save_model(TorchWrapper(state), self._train_path, epoch=epoch)
+
+    def _load_state(self):
+        self._encoder.load_state_dict(self._model["encoder"])
+        self._predictor.load_state_dict(self._model["predictor"])
+        self._optimizer.load_state_dict(self._model["optimizer"])
+        self._scheduler.load_state_dict(self._model["scheduler"])

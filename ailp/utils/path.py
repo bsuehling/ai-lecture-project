@@ -8,8 +8,15 @@ import torch
 import torch.nn as nn
 
 
+class TorchWrapper:
+    def __init__(self, state_dicts: dict[str, dict[str, Any]]):
+        self.state_dicts = state_dicts
+
+
 def save_model(
-    model: dict | nn.Module, directory: str | os.PathLike, epoch: int | None = None
+    model: dict | nn.Module | TorchWrapper,
+    directory: str | os.PathLike,
+    epoch: int | None = None,
 ) -> None:
     """Save the model in the specified directory and as the latest model.
 
@@ -23,7 +30,9 @@ def save_model(
         The epoch in which the model was created.
     """
     is_torch_model = isinstance(model, nn.Module)
-    file_extension = "pt" if is_torch_model else "pickle"
+    is_torch_wrapper = isinstance(model, TorchWrapper)
+    is_torch = is_torch_model or is_torch_wrapper
+    file_extension = "pt" if is_torch else "pickle"
     file_name = "model" if epoch is None else f"model{epoch:03d}"
     file_path = os.path.join(directory, f"{file_name}.{file_extension}")
 
@@ -38,6 +47,9 @@ def save_model(
         state_dict = model.state_dict()
         torch.save(state_dict, file_path)
         torch.save(state_dict, latest_torch)
+    elif is_torch_wrapper:
+        torch.save(model.state_dicts, file_path)
+        torch.save(model.state_dicts, latest_torch)
     else:
         with open(file_path, "wb") as f:
             pickle.dump(model, f)
