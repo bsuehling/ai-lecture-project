@@ -12,7 +12,6 @@ class RuleBasedModel(PredictionModel):
         tgt_level = 0
         if level >= tgt_level: print(string)
     
-
     def predict_graph(self, parts: set[Part]) -> Graph:
         graph = Graph()
         # Parts which are currently (not) in the tree

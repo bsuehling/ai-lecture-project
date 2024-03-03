@@ -16,8 +16,8 @@ from ailp.graph.node import Node
 from ailp.utils import save_model
 
 
-# Mac: No divide degree and similarity (82.36451273062903)
-# VM:  Do divide (88)
+# No divide degree and similarity (82.36451273062903)
+# Do divide (88)
 # With divide and *2: 90%
 class RulesWithSimilarityModel(PredictionModel):
 
@@ -28,7 +28,6 @@ class RulesWithSimilarityModel(PredictionModel):
     def log(self, level: int, string: str):
         tgt_level = 0
         if level >= tgt_level: print(string)
-    
 
     def predict_graph(self, parts: set[Part]) -> Graph:
         edge_score_matrix  = self._model["edge_score_matrix"]
