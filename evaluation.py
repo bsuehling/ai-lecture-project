@@ -117,10 +117,16 @@ def main():
     with open("./data/graphs.dat", "rb") as file:
         graphs: list[Graph] = pickle.load(file)
 
-    seed = os.environ.get("RANDOM_SEED", 42)
-    stage = os.environ.get("STAGE", "train")
-    approach = os.environ.get("APPROACH", "edge_gnn")
+    # Uncomment the following lines to run trainig / tests other than the final
+    # performance test
+    # seed = os.environ.get("RANDOM_SEED", 42)
+    # stage = os.environ.get("STAGE", "train")
+    # approach = os.environ.get("APPROACH", "edge_gnn")
     epoch = os.environ.get("EPOCH")
+
+    seed = 42
+    stage = "final"
+    approach = "rule_based"
 
     random.seed(seed)
 
@@ -141,6 +147,14 @@ def main():
         instances = [(graph.parts, graph) for graph in test_graphs]
         eval_score = evaluate(prediction_model(test_path=load_path), instances)
 
+        print(eval_score)
+
+    elif stage == "final":
+        load_path = os.path.join(".", "data", "final-models", "rule_based.pickle")
+        model = prediction_model(test_path=load_path)
+
+        instances = [(graph.parts, graph) for graph in test_graphs]
+        eval_score = evaluate(model, instances)
         print(eval_score)
 
 
