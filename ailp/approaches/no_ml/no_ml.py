@@ -54,5 +54,5 @@ class NoMLModel(PredictionModel):
 
         for src, tgt in connections.items():
             print(f"{src} -> {tgt}")
-            
+
         save_model(connections, self._train_path)
